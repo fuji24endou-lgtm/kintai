@@ -125,12 +125,13 @@
   .nbadge{font-size:9px;background:var(--red);color:#fff;border-radius:4px;padding:1px 4px;margin-left:4px;}
 
   /* フリー入力 */
-  .free-input-row{display:flex;gap:8px;margin-top:10px;align-items:center;}
-  .free-input-text{flex:2;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:14px;font-family:'Noto Sans JP',sans-serif;padding:10px 12px;border-radius:10px;outline:none;}
+  .free-input-row{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
+  .free-input-text{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:14px;font-family:'Noto Sans JP',sans-serif;padding:12px 14px;border-radius:10px;outline:none;}
   .free-input-text:focus{border-color:var(--accent);}
-  .free-input-amount{flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:14px;font-family:'DM Mono',monospace;padding:10px 12px;border-radius:10px;outline:none;}
+  .free-amount-row{display:flex;gap:8px;align-items:center;}
+  .free-input-amount{flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:14px;font-family:'DM Mono',monospace;padding:12px 14px;border-radius:10px;outline:none;}
   .free-input-amount:focus{border-color:var(--accent);}
-  .free-input-btn{background:var(--accent);border:none;color:#1a1208;font-size:13px;font-weight:700;font-family:'Noto Sans JP',sans-serif;padding:10px 14px;border-radius:10px;cursor:pointer;white-space:nowrap;}
+  .free-input-btn{background:var(--accent);border:none;color:#1a1208;font-size:14px;font-weight:700;font-family:'Noto Sans JP',sans-serif;padding:12px 20px;border-radius:10px;cursor:pointer;white-space:nowrap;}
   .free-input-btn:active{opacity:.8;}
   .free-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(212,168,81,.15);border:1px solid var(--gold);border-radius:20px;padding:5px 10px;font-size:11px;color:var(--gold);margin:3px 3px 0 0;}
   .free-tag-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;line-height:1;padding:0;}
@@ -760,8 +761,10 @@ function renderAllowances() {
     <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">＋ フリー手当（手入力）</div>
     <div class="free-input-row">
       <input type="text" class="free-input-text" id="free-name" placeholder="手当名を入力">
-      <input type="number" class="free-input-amount" id="free-amount" placeholder="金額" inputmode="numeric">
-      <button class="free-input-btn" onclick="addFreeAllowance()">追加</button>
+      <div class="free-amount-row">
+        <input type="number" class="free-input-amount" id="free-amount" placeholder="金額" inputmode="numeric">
+        <button class="free-input-btn" onclick="addFreeAllowance()">追加</button>
+      </div>
     </div>
     <div id="free-tags"></div>`;
   grid.appendChild(freeWrap);
