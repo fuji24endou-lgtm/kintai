@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- saved from url=(0081)file:///C:/Users/%E5%AF%8C%E5%A3%AB%E8%91%AC%E7%A5%AD/Downloads/kintai_app_1.html -->
-<html lang="ja"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>勤怠・手当管理</title>
-<link href="./kintai_app_files/css2" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg:#0f0f0f; --surface:#1a1a1a; --surface2:#242424; --border:#2e2e2e;
@@ -169,7 +169,7 @@
     <label class="lbl">スタッフ名</label>
     <select class="staff-select" id="staff-select">
       <option value="">-- 選択してください --</option>
-    <option value="中島 靖裕">中島 靖裕</option><option value="横山 浩士">横山 浩士</option><option value="永田 晃久">永田 晃久</option><option value="江村 雄一">江村 雄一</option><option value="窪田 知穂">窪田 知穂</option><option value="広瀬 祐樹">広瀬 祐樹</option><option value="遠藤 美樹">遠藤 美樹</option><option value="深尾 翔馬">深尾 翔馬</option><option value="國枝 記代">國枝 記代</option><option value="乾　妙子">乾　妙子</option></select>
+    </select>
     <label class="lbl" style="display:none;">PIN（4桁）</label>
     <div class="pin-row" style="display:none;">
       <input type="number" class="pin-digit" id="p0" inputmode="numeric" min="0" max="9">
@@ -187,7 +187,7 @@
   <div class="app-header">
     <div>
       <div class="header-user" id="header-user"></div>
-      <div class="header-date" id="header-date">2026年3月22日（日）</div>
+      <div class="header-date" id="header-date"></div>
     </div>
     <button class="logout-btn" onclick="doLogout()">ログアウト</button>
   </div>
@@ -209,7 +209,7 @@
           <div class="kc-label">退勤</div>
           <div class="kc-time" id="time-out">17:00</div>
           <div class="kc-note" id="out-note">未打刻=17:00自動</div>
-          <button class="sbtn sbtn-out" id="btn-out" onclick="stampOut()" style="margin-top:8px;" disabled="">退勤打刻</button>
+          <button class="sbtn sbtn-out" id="btn-out" onclick="stampOut()" style="margin-top:8px;" disabled>退勤打刻</button>
           <div class="cancel-lnk" id="cancel-out" onclick="cancelOut()">取り消す</div>
         </div>
       </div>
@@ -221,12 +221,12 @@
     <div class="section-label">休日申請（日付をタップ → 公休・有給を選択）</div>
     <div class="holiday-card">
       <div class="cal-header">
-        <button class="cal-nav" onclick="calMove(-1)">‹</button>
-        <div class="cal-month-label" id="cal-month-label">2026年 3月</div>
-        <button class="cal-nav" onclick="calMove(1)">›</button>
+        <button class="cal-nav" onclick="calMove(-1)">&#8249;</button>
+        <div class="cal-month-label" id="cal-month-label"></div>
+        <button class="cal-nav" onclick="calMove(1)">&#8250;</button>
         <button class="cal-today-btn" onclick="calToday()">今月</button>
       </div>
-      <div class="cal-grid" id="cal-grid"><div class="cal-dow">日</div><div class="cal-dow">月</div><div class="cal-dow">火</div><div class="cal-dow">水</div><div class="cal-dow">木</div><div class="cal-dow">金</div><div class="cal-dow">土</div><div class="cal-day sun" onclick="calSelectDay(&#39;2026/03/01&#39;)">1</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/02&#39;)">2</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/03&#39;)">3</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/04&#39;)">4</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/05&#39;)">5</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/06&#39;)">6</div><div class="cal-day sat" onclick="calSelectDay(&#39;2026/03/07&#39;)">7</div><div class="cal-day sun" onclick="calSelectDay(&#39;2026/03/08&#39;)">8</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/09&#39;)">9</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/10&#39;)">10</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/11&#39;)">11</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/12&#39;)">12</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/13&#39;)">13</div><div class="cal-day sat" onclick="calSelectDay(&#39;2026/03/14&#39;)">14</div><div class="cal-day sun" onclick="calSelectDay(&#39;2026/03/15&#39;)">15</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/16&#39;)">16</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/17&#39;)">17</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/18&#39;)">18</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/19&#39;)">19</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/20&#39;)">20</div><div class="cal-day sat" onclick="calSelectDay(&#39;2026/03/21&#39;)">21</div><div class="cal-day sun today" onclick="calSelectDay(&#39;2026/03/22&#39;)">22</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/23&#39;)">23</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/24&#39;)">24</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/25&#39;)">25</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/26&#39;)">26</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/27&#39;)">27</div><div class="cal-day sat" onclick="calSelectDay(&#39;2026/03/28&#39;)">28</div><div class="cal-day sun" onclick="calSelectDay(&#39;2026/03/29&#39;)">29</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/30&#39;)">30</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/31&#39;)">31</div></div>
+      <div class="cal-grid" id="cal-grid"></div>
       <div class="cal-legend">
         <span><span class="cal-legend-dot" style="background:rgba(90,138,224,.5);"></span>公休</span>
         <span><span class="cal-legend-dot" style="background:rgba(155,114,207,.5);"></span>有給</span>
@@ -234,11 +234,11 @@
       <div id="cal-action" style="margin-top:12px;display:none;">
         <div style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:8px;" id="cal-selected-label"></div>
         <div class="holiday-row" style="margin-bottom:0;">
-          <button class="hbtn" id="btn-koukyuu" onclick="addHoliday(&#39;koukyuu&#39;)">
+          <button class="hbtn" id="btn-koukyuu" onclick="addHoliday('koukyuu')">
             <div class="hbtn-icon">📅</div>
             <div class="hbtn-name">公　休</div>
           </button>
-          <button class="hbtn" id="btn-yukyuu" onclick="addHoliday(&#39;yukyuu&#39;)">
+          <button class="hbtn" id="btn-yukyuu" onclick="addHoliday('yukyuu')">
             <div class="hbtn-icon">🌿</div>
             <div class="hbtn-name">有　給</div>
           </button>
@@ -289,7 +289,7 @@
     <div class="modal-title">送信確認</div>
     <div class="modal-sub" id="modal-sub"></div>
     <button class="mbtn mbtn-ok" onclick="doSubmit()">送信する</button>
-    <button class="mbtn mbtn-cancel" onclick="closeModal(&#39;submit-modal&#39;)">キャンセル</button>
+    <button class="mbtn mbtn-cancel" onclick="closeModal('submit-modal')">キャンセル</button>
   </div>
 </div>
 
@@ -300,7 +300,7 @@
     <div class="modal-title" id="cm-title">🔒 締めを実行しますか？</div>
     <div class="modal-sub" id="cm-sub"></div>
     <button class="mbtn mbtn-red" id="cm-btn" onclick="doClosing()">締める</button>
-    <button class="mbtn mbtn-cancel" onclick="closeModal(&#39;closing-modal&#39;)">キャンセル</button>
+    <button class="mbtn mbtn-cancel" onclick="closeModal('closing-modal')">キャンセル</button>
   </div>
 </div>
 
@@ -366,6 +366,8 @@ let holidays = {};
 // ============================================================
 window.onload = () => {
   const sel = document.getElementById("staff-select");
+  // 既存のオプションをクリアしてから追加（二重防止）
+  while (sel.options.length > 1) sel.remove(1);
   STAFF_LIST.forEach(s => {
     const o = document.createElement("option");
     o.value = s.name; o.textContent = s.name;
@@ -811,9 +813,15 @@ async function doSubmit() {
   };
   document.getElementById("sheet-result").textContent="送信中…";
   try {
-    await fetch(GAS_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-    document.getElementById("sheet-result").textContent="✓ スプレッドシートへ送信完了";
-    showToast("送信しました！");
+    const res = await fetch(GAS_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+    const result = await res.json().catch(()=>({}));
+    if (result.managerEdited) {
+      document.getElementById("sheet-result").textContent="⚠️ 管理者が修正済みのデータに上書き送信しました";
+      showToast("⚠️ 管理者修正あり・上書きしました");
+    } else {
+      document.getElementById("sheet-result").textContent="✓ スプレッドシートへ送信完了";
+      showToast("送信しました！");
+    }
   } catch(e) {
     document.getElementById("sheet-result").textContent="送信エラー：ネットワークを確認してください";
   }
@@ -860,6 +868,5 @@ function showToast(msg) {
   setTimeout(()=>t.classList.remove("show"),2500);
 }
 </script>
-
-
-</body></html>
+</body>
+</html>
