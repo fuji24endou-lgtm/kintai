@@ -813,15 +813,9 @@ async function doSubmit() {
   };
   document.getElementById("sheet-result").textContent="送信中…";
   try {
-    const res = await fetch(GAS_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-    const result = await res.json().catch(()=>({}));
-    if (result.managerEdited) {
-      document.getElementById("sheet-result").textContent="⚠️ 管理者が修正済みのデータに上書き送信しました";
-      showToast("⚠️ 管理者修正あり・上書きしました");
-    } else {
-      document.getElementById("sheet-result").textContent="✓ スプレッドシートへ送信完了";
-      showToast("送信しました！");
-    }
+    await fetch(GAS_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify(payload)});
+    document.getElementById("sheet-result").textContent="✓ スプレッドシートへ送信完了";
+    showToast("送信しました！");
   } catch(e) {
     document.getElementById("sheet-result").textContent="送信エラー：ネットワークを確認してください";
   }
