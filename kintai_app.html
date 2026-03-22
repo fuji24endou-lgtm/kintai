@@ -874,7 +874,8 @@ function openSubmitModal() {
       lines.push(`${a.name}: ¥${a.amount.toLocaleString()}${r.isNextMonth?" [翌月]":""}`);
     }
   });
-  if (!rec.inTime && !holidays[todayKey_] && !Object.keys(rec.allowances).length) {
+  const hasHolidays = Object.keys(holidays).length > 0;
+  if (!rec.inTime && !holidays[todayKey_] && !Object.keys(rec.allowances).length && !hasHolidays) {
     showToast("送信する内容がありません"); return;
   }
   document.getElementById("modal-sub").textContent=lines.join("\n");
@@ -897,6 +898,7 @@ async function doSubmit() {
     isHayatai:     rec.isHayatai,
     holidayToday:  holidays[todayKey_]||"",
     holidays:      Object.entries(holidays).map(([d,t])=>({date:d,type:t})),
+    allHolidays:   holidays,
     closingTime:   rec.closingTime||"",
     allowances:    [
       ...ALLOWANCES.filter(a=>!a.isFree).map(a=>({
