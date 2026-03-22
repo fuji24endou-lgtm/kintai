@@ -505,15 +505,21 @@ async function fetchStaffData(name) {
   try {
     const res  = await fetch(GAS_URL + "?t=" + Date.now());
     const data = await res.json();
-    if (data.status==="ok" && data.staff && data.staff[name]) {
-      const s = data.staff[name];
-      currentUser.koukyuuRemain = s.koukyuuRemain || 0;
-      currentUser.carryoverDays = s.carryoverDays || 0;
-      currentUser.yukyuuRemain  = s.yukyuuRemain  || 0;
-      currentUser.monthlyTotal  = s.monthlyTotal  || 0;
-      currentUser.periodLabel   = s.periodLabel   || "";
-      renderStaffInfo();
-      renderMonthlyFromGAS();
+    if (data.status==="ok") {
+      // 残日数を更新
+      if (data.staff && data.staff[name]) {
+        const s = data.staff[name];
+        currentUser.koukyuuRemain = s.koukyuuRemain || 0;
+        currentUser.carryoverDays = s.carryoverDays || 0;
+        currentUser.yukyuuRemain  = s.yukyuuRemain  || 0;
+        renderStaffInfo();
+      }
+      // 当月累積金額を更新（staffDataのmonthlyTotalから取得）
+      if (data.staff && data.staff[name] && data.staff[name].monthlyTotal !== undefined) {
+        currentUser.monthlyTotal = data.staff[name].monthlyTotal || 0;
+        currentUser.periodLabel  = data.periodLabel || "";
+        renderMonthlyFromGAS();
+      }
     }
   } catch(e) { /* 取得失敗時はデフォルト値のまま */ }
 }
@@ -1065,6 +1071,8 @@ async function doSubmit() {
       document.getElementById("manager-warning").classList.remove("show");
       document.getElementById("sheet-result").textContent="✓ スプレッドシートへ送信完了";
       showToast("送信しました！");
+      // 送信後に累積金額を再取得
+      setTimeout(() => fetchStaffData(currentUser.name), 1500);
       // 送信後に累積金額を再取得
       setTimeout(() => fetchStaffData(currentUser.name), 1500);
     }
