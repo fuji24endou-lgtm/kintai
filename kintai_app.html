@@ -835,8 +835,15 @@ function renderLog() {
   if (holidays[todayKey_]) {
     items.push({ label:holidays[todayKey_]==="koukyuu"?"📅 公休":"🌿 有給", time:"申請済", next:false });
   }
-  if (rec.inTime)   items.push({ label:"出勤打刻", time:rec.inTime, next:false });
-  if (rec.outTime)  items.push({ label:rec.isHayatai?"早退打刻":"退勤打刻", time:rec.outTime, next:false });
+  if (rec.inTime) {
+    items.push({ label:"出勤打刻", time:rec.inTime, next:false });
+    // 退勤は出勤がある場合のみ表示
+    if (rec.outTime) {
+      items.push({ label:rec.isHayatai?"早退打刻":"退勤打刻", time:rec.outTime, next:false });
+    } else {
+      items.push({ label:"退勤", time:"17:00（自動）", next:false });
+    }
+  }
   if (rec.closingTime) items.push({ label:"🔒 締め", time:rec.closingTime, next:false });
   ALLOWANCES.forEach(a=>{
     if (a.isFree) return;
@@ -865,8 +872,10 @@ function openSubmitModal() {
   const lines=[];
   const todayKey_=fmtDate(new Date());
   if (holidays[todayKey_]) lines.push(holidays[todayKey_]==="koukyuu"?"📅 公休":"🌿 有給");
-  if (rec.inTime) lines.push(`出勤: ${rec.inTime}`);
-  lines.push(`退勤: ${rec.outTime?rec.outTime+"（"+(rec.isHayatai?"早退":"通常")+"）":"17:00（自動）"}`);
+  if (rec.inTime) {
+    lines.push(`出勤: ${rec.inTime}`);
+    lines.push(`退勤: ${rec.outTime?rec.outTime+"（"+(rec.isHayatai?"早退":"通常")+"）":"17:00（自動）"}`);
+  }
   if (rec.closingTime) lines.push(`🔒 締め: ${rec.closingTime}`);
   ALLOWANCES.forEach(a=>{
     if (rec.allowances[a.id]) {
