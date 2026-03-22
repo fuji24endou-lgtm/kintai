@@ -124,6 +124,17 @@
   .abtn.on .dot{opacity:1;}
   .nbadge{font-size:9px;background:var(--red);color:#fff;border-radius:4px;padding:1px 4px;margin-left:4px;}
 
+  /* フリー入力 */
+  .free-input-row{display:flex;gap:8px;margin-top:10px;align-items:center;}
+  .free-input-text{flex:2;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:14px;font-family:'Noto Sans JP',sans-serif;padding:10px 12px;border-radius:10px;outline:none;}
+  .free-input-text:focus{border-color:var(--accent);}
+  .free-input-amount{flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:14px;font-family:'DM Mono',monospace;padding:10px 12px;border-radius:10px;outline:none;}
+  .free-input-amount:focus{border-color:var(--accent);}
+  .free-input-btn{background:var(--accent);border:none;color:#1a1208;font-size:13px;font-weight:700;font-family:'Noto Sans JP',sans-serif;padding:10px 14px;border-radius:10px;cursor:pointer;white-space:nowrap;}
+  .free-input-btn:active{opacity:.8;}
+  .free-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(212,168,81,.15);border:1px solid var(--gold);border-radius:20px;padding:5px 10px;font-size:11px;color:var(--gold);margin:3px 3px 0 0;}
+  .free-tag-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;line-height:1;padding:0;}
+
   /* ── ログ ── */
   .log-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:12px;}
   .log-item{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-bottom:1px solid var(--border);font-size:12px;}
@@ -334,12 +345,18 @@ const STAFF_LIST = [
 //  手当（金額は後で変更可）
 // ============================================================
 const ALLOWANCES = [
-  { id:"tuya",     name:"お通夜",     amount:1000 },
-  { id:"sogi",     name:"葬　儀",     amount:1000 },
-  { id:"hansou",   name:"時間外搬送", amount:1000 },
-  { id:"juchu",    name:"時間外受注", amount:1000 },
-  { id:"keisatsu", name:"警察案件",   amount:1000 },
-  { id:"other",    name:"その他手当", amount:1000 },
+  { id:"a01", name:"① 電話当番",                    amount:5000  },
+  { id:"a02", name:"② 時間外搬送・打合せ",           amount:10000 },
+  { id:"a03", name:"③ 時間外搬送/枕飾り(蓮成寺)",   amount:5000  },
+  { id:"a04", name:"④ 通夜",                        amount:3000  },
+  { id:"a05", name:"⑤ 葬儀",                        amount:2000  },
+  { id:"a07", name:"⑦ 警察案件(夜間)",               amount:5000  },
+  { id:"a08", name:"⑧ 警察案件(昼間)",               amount:3000  },
+  { id:"a15", name:"⑮ 事前相談依頼",                 amount:500   },
+  { id:"a16", name:"⑯ お別れ時間対応(営業)",         amount:1500  },
+  { id:"a17", name:"⑰ お別れ時間対応(補佐)",         amount:1000  },
+  { id:"a18", name:"⑱ 補佐(研修中)",                 amount:1500  },
+  { id:"free", name:"＋ フリー入力",                  amount:0, isFree:true },
 ];
 
 // ============================================================
@@ -722,7 +739,9 @@ function renderAllowances() {
   const grid=document.getElementById("allowance-grid");
   const afterClose=isAfterClosing();
   grid.innerHTML="";
+
   ALLOWANCES.forEach(a=>{
+    if (a.isFree) return; // フリーは別途
     const isOn=!!rec.allowances[a.id];
     const isNext=isOn?rec.allowances[a.id].isNextMonth:afterClose;
     const btn=document.createElement("button");
@@ -733,6 +752,51 @@ function renderAllowances() {
     btn.onclick=()=>toggleAllowance(a.id,a.amount);
     grid.appendChild(btn);
   });
+
+  // フリー入力エリア
+  const freeWrap = document.createElement("div");
+  freeWrap.style.cssText="grid-column:1/-1;";
+  freeWrap.innerHTML=`
+    <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">＋ フリー手当（手入力）</div>
+    <div class="free-input-row">
+      <input type="text" class="free-input-text" id="free-name" placeholder="手当名を入力">
+      <input type="number" class="free-input-amount" id="free-amount" placeholder="金額" inputmode="numeric">
+      <button class="free-input-btn" onclick="addFreeAllowance()">追加</button>
+    </div>
+    <div id="free-tags"></div>`;
+  grid.appendChild(freeWrap);
+  renderFreeTags();
+}
+
+function addFreeAllowance() {
+  const name   = document.getElementById("free-name").value.trim();
+  const amount = parseInt(document.getElementById("free-amount").value);
+  if (!name)       { showToast("手当名を入力してください"); return; }
+  if (!amount || amount <= 0) { showToast("金額を入力してください"); return; }
+  const id = "free_" + Date.now();
+  rec.allowances[id] = { amount, time:nowHHMM(), isNextMonth:isAfterClosing(), freeName:name };
+  document.getElementById("free-name").value="";
+  document.getElementById("free-amount").value="";
+  saveRec(); renderAllowances(); renderLog();
+  showToast(`${name} ¥${amount.toLocaleString()} を追加しました`);
+}
+
+function removeFreeAllowance(id) {
+  delete rec.allowances[id];
+  saveRec(); renderAllowances(); renderLog();
+  showToast("フリー手当を取り消しました");
+}
+
+function renderFreeTags() {
+  const container = document.getElementById("free-tags");
+  if (!container) return;
+  const freeItems = Object.entries(rec.allowances).filter(([id])=>id.startsWith("free_"));
+  if (!freeItems.length) { container.innerHTML=""; return; }
+  container.innerHTML = freeItems.map(([id,r])=>`
+    <span class="free-tag">
+      ${r.freeName} ¥${r.amount.toLocaleString()}${r.isNextMonth?' [翌月]':''}
+      <button class="free-tag-del" onclick="removeFreeAllowance('${id}')">×</button>
+    </span>`).join("");
 }
 
 function renderLog() {
@@ -748,10 +812,15 @@ function renderLog() {
   if (rec.outTime)  items.push({ label:rec.isHayatai?"早退打刻":"退勤打刻", time:rec.outTime, next:false });
   if (rec.closingTime) items.push({ label:"🔒 締め", time:rec.closingTime, next:false });
   ALLOWANCES.forEach(a=>{
+    if (a.isFree) return;
     if (rec.allowances[a.id]) {
       const r=rec.allowances[a.id];
       items.push({ label:`${a.name}　¥${a.amount.toLocaleString()}`, time:r.time, next:r.isNextMonth });
     }
+  });
+  // フリー手当
+  Object.entries(rec.allowances).filter(([id])=>id.startsWith("free_")).forEach(([id,r])=>{
+    items.push({ label:`＋${r.freeName}　¥${r.amount.toLocaleString()}`, time:r.time, next:r.isNextMonth });
   });
 
   if (!items.length) { card.innerHTML='<div class="log-empty">まだ記録がありません</div>'; return; }
@@ -802,12 +871,20 @@ async function doSubmit() {
     holidayToday:  holidays[todayKey_]||"",
     holidays:      Object.entries(holidays).map(([d,t])=>({date:d,type:t})),
     closingTime:   rec.closingTime||"",
-    allowances:    ALLOWANCES.map(a=>({
-      name:        a.name,
-      amount:      rec.allowances[a.id]?a.amount:0,
-      time:        rec.allowances[a.id]?rec.allowances[a.id].time:"",
-      isNextMonth: rec.allowances[a.id]?rec.allowances[a.id].isNextMonth:false,
-    })),
+    allowances:    [
+      ...ALLOWANCES.filter(a=>!a.isFree).map(a=>({
+        name:        a.name,
+        amount:      rec.allowances[a.id]?a.amount:0,
+        time:        rec.allowances[a.id]?rec.allowances[a.id].time:"",
+        isNextMonth: rec.allowances[a.id]?rec.allowances[a.id].isNextMonth:false,
+      })),
+      ...Object.entries(rec.allowances).filter(([id])=>id.startsWith("free_")).map(([id,r])=>({
+        name:        "＋"+r.freeName,
+        amount:      r.amount,
+        time:        r.time,
+        isNextMonth: r.isNextMonth,
+      }))
+    ],
     submittedAt:   nowHHMM(),
     carryoverDays: currentUser.carryoverDays,
   };
