@@ -203,7 +203,7 @@
     </div>
     <button class="logout-btn" onclick="doLogout()">ログアウト</button>
   </div>
-  <div style="background:rgba(212,168,81,.15);border-bottom:1px solid rgba(212,168,81,.3);padding:8px 20px;font-size:11px;color:var(--accent);text-align:center;">⚙️ 動作確認モード（PIN不要）</div>
+  <div style="background:var(--surface2);padding:8px 20px;font-size:12px;color:var(--accent);text-align:center;border-bottom:1px solid var(--border);" id="staff-info">残日数を読み込み中...</div>
   <div class="closing-banner" id="closing-banner"></div>
 
   <!-- 出退勤 -->
@@ -472,9 +472,33 @@ function doLogin() {
   const savedHol = localStorage.getItem("hol_"+staff.name);
   holidays = savedHol ? JSON.parse(savedHol) : {};
 
+  // GASからスタッフ残日数を取得
+  fetchStaffData(staff.name);
+
   calToday();
   renderAll();
   updateHeader();
+}
+
+async function fetchStaffData(name) {
+  try {
+    const res  = await fetch(GAS_URL + "?t=" + Date.now());
+    const data = await res.json();
+    if (data.status==="ok" && data.staff && data.staff[name]) {
+      const s = data.staff[name];
+      currentUser.koukyuuRemain = s.koukyuuRemain || 0;
+      currentUser.carryoverDays = s.carryoverDays || 0;
+      currentUser.yukyuuRemain  = s.yukyuuRemain  || 0;
+      renderStaffInfo();
+    }
+  } catch(e) { /* 取得失敗時はデフォルト値のまま */ }
+}
+
+function renderStaffInfo() {
+  const el = document.getElementById("staff-info");
+  if (!el || !currentUser) return;
+  el.textContent =
+    `公休残 ${currentUser.koukyuuRemain||0}日　繰越 ${currentUser.carryoverDays||0}日　有給残 ${currentUser.yukyuuRemain||0}日`;
 }
 
 function doLogout() {
