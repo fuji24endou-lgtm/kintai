@@ -315,6 +315,32 @@
   </div>
 </div>
 
+<!-- 管理者修正ブロックモーダル -->
+<div class="modal-overlay" id="manager-block-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⚠️ 送信できません</div>
+    <div class="modal-sub">管理者がこの日の記録を修正しています。
+
+送信する前に管理者に確認してください。
+確認後、管理者が★を外したら送信できるようになります。</div>
+    <button class="mbtn mbtn-cancel" onclick="closeModal('manager-block-modal')">閉じる</button>
+  </div>
+</div>
+
+<!-- 管理者修正ブロックモーダル -->
+<div class="modal-overlay" id="manager-block-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⚠️ 送信できません</div>
+    <div class="modal-sub">管理者がこの日の記録を修正しています。
+
+送信する前に管理者に確認してください。
+管理者が確認後★を外したら送信できます。</div>
+    <button class="mbtn mbtn-cancel" onclick="closeModal('manager-block-modal')">閉じる</button>
+  </div>
+</div>
+
 <!-- 送信確認モーダル -->
 <div class="modal-overlay" id="submit-modal">
   <div class="modal-sheet">
@@ -1026,6 +1052,10 @@ function openSubmitModal() {
 
 function closeModal(id) { document.getElementById(id).classList.remove("open"); }
 
+function showManagerBlockModal() {
+  document.getElementById("manager-block-modal").classList.add("open");
+}
+
 async function doSubmit() {
   closeModal("submit-modal");
   const now=new Date();
@@ -1059,23 +1089,26 @@ async function doSubmit() {
     submittedAt:   nowHHMM(),
     carryoverDays: currentUser.carryoverDays,
   };
-  document.getElementById("sheet-result").textContent="送信中…";
+  document.getElementById("sheet-result").textContent="確認中…";
   try {
-    const res = await fetch(GAS_URL,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify(payload)});
-    const result = await res.json().catch(()=>({}));
-    if (result.managerEdited) {
-      document.getElementById("sheet-result").textContent="⚠️ 管理者が修正済みのデータに上書き送信しました";
-      document.getElementById("manager-warning").classList.add("show");
-      showToast("⚠️ 管理者が修正済みです");
-    } else {
-      document.getElementById("manager-warning").classList.remove("show");
-      document.getElementById("sheet-result").textContent="✓ スプレッドシートへ送信完了";
-      showToast("送信しました！");
-      // 送信後に累積金額を再取得
-      setTimeout(() => fetchStaffData(currentUser.name), 1500);
-      // 送信後に累積金額を再取得
-      setTimeout(() => fetchStaffData(currentUser.name), 1500);
+    // まず管理者★チェック
+    const checkRes = await fetch(GAS_URL + "?check=1&staff=" + encodeURIComponent(payload.staff) + "&date=" + encodeURIComponent(payload.date) + "&t=" + Date.now());
+    const checkData = await checkRes.json().catch(()=>({}));
+
+    if (checkData.managerEdited) {
+      // ★がある場合は送信ブロック
+      document.getElementById("sheet-result").textContent="";
+      document.getElementById("manager-block-modal").classList.add("open");
+      return;
     }
+
+    // 通常送信
+    document.getElementById("sheet-result").textContent="送信中…";
+    await fetch(GAS_URL,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify(payload)});
+    document.getElementById("manager-warning").classList.remove("show");
+    document.getElementById("sheet-result").textContent="✓ スプレッドシートへ送信完了";
+    showToast("送信しました！");
+    setTimeout(() => fetchStaffData(currentUser.name), 1500);
   } catch(e) {
     document.getElementById("sheet-result").textContent="送信エラー：ネットワークを確認してください";
   }
