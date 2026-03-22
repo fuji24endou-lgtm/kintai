@@ -328,19 +328,6 @@
   </div>
 </div>
 
-<!-- 管理者修正ブロックモーダル -->
-<div class="modal-overlay" id="manager-block-modal">
-  <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div class="modal-title">⚠️ 送信できません</div>
-    <div class="modal-sub">管理者がこの日の記録を修正しています。
-
-送信する前に管理者に確認してください。
-管理者が確認後★を外したら送信できます。</div>
-    <button class="mbtn mbtn-cancel" onclick="closeModal('manager-block-modal')">閉じる</button>
-  </div>
-</div>
-
 <!-- 送信確認モーダル -->
 <div class="modal-overlay" id="submit-modal">
   <div class="modal-sheet">
@@ -1092,7 +1079,8 @@ async function doSubmit() {
   document.getElementById("sheet-result").textContent="確認中…";
   try {
     // まず管理者★チェック
-    const checkRes = await fetch(GAS_URL + "?check=1&staff=" + encodeURIComponent(payload.staff) + "&date=" + encodeURIComponent(payload.date) + "&t=" + Date.now());
+    const dateForCheck = payload.date.replace(/\//g, "-");
+    const checkRes = await fetch(GAS_URL + "?check=1&staff=" + encodeURIComponent(payload.staff) + "&date=" + encodeURIComponent(dateForCheck) + "&t=" + Date.now());
     const checkData = await checkRes.json().catch(()=>({}));
 
     if (checkData.managerEdited) {
