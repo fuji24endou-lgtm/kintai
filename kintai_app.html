@@ -124,6 +124,14 @@
   .abtn.on .dot{opacity:1;}
   .nbadge{font-size:9px;background:var(--red);color:#fff;border-radius:4px;padding:1px 4px;margin-left:4px;}
 
+  /* 今月累積手当 */
+  .monthly-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;}
+  .monthly-total{font-size:26px;font-weight:700;font-family:'DM Mono',monospace;color:var(--gold);text-align:center;margin:8px 0;}
+  .monthly-period{font-size:11px;color:var(--muted);text-align:center;margin-bottom:4px;}
+  .monthly-breakdown{font-size:11px;color:var(--muted);text-align:center;}
+  .manager-warning{display:none;background:rgba(224,90,90,.1);border:1px solid rgba(224,90,90,.3);border-radius:10px;padding:10px 14px;margin-top:10px;font-size:12px;color:var(--red);text-align:center;}
+  .manager-warning.show{display:block;}
+
   /* フリー入力 */
   .free-input-row{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
   .free-input-text{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:14px;font-family:'Noto Sans JP',sans-serif;padding:12px 14px;border-radius:10px;outline:none;}
@@ -269,6 +277,19 @@
       </button>
       <div class="closing-desc" id="closing-desc">締めボタンを押した後の手当は<strong>翌月扱い</strong>になります</div>
       <div class="closing-alert" id="closing-alert">⚠️ 締め済み：以降の手当は翌月扱いです</div>
+    </div>
+  </div>
+
+  <!-- 今月の手当累積 -->
+  <div class="section">
+    <div class="section-label">今月の手当累積</div>
+    <div class="monthly-card">
+      <div class="monthly-period" id="monthly-period"></div>
+      <div class="monthly-total" id="monthly-total">¥0</div>
+      <div class="monthly-breakdown" id="monthly-breakdown"></div>
+      <div class="manager-warning" id="manager-warning">
+        ⚠️ 管理者が手当を修正しています。内容を確認してください。
+      </div>
     </div>
   </div>
 
@@ -489,9 +510,24 @@ async function fetchStaffData(name) {
       currentUser.koukyuuRemain = s.koukyuuRemain || 0;
       currentUser.carryoverDays = s.carryoverDays || 0;
       currentUser.yukyuuRemain  = s.yukyuuRemain  || 0;
+      currentUser.monthlyTotal  = s.monthlyTotal  || 0;
+      currentUser.periodLabel   = s.periodLabel   || "";
       renderStaffInfo();
+      renderMonthlyFromGAS();
     }
   } catch(e) { /* 取得失敗時はデフォルト値のまま */ }
+}
+
+function renderMonthlyFromGAS() {
+  if (!currentUser) return;
+  const total = currentUser.monthlyTotal || 0;
+  const label = currentUser.periodLabel || "";
+  document.getElementById("monthly-period").textContent =
+    label ? `集計期間：${label}` : "集計期間：取得中...";
+  document.getElementById("monthly-total").textContent =
+    `¥${total.toLocaleString()}`;
+  document.getElementById("monthly-breakdown").textContent =
+    "スプレッドシートの合計";
 }
 
 function renderStaffInfo() {
@@ -695,6 +731,97 @@ function renderAll() {
   renderClosing();
   renderAllowances();
   renderLog();
+  renderMonthlyTotal();
+}
+
+// ============================================================
+//  今月の手当累積表示（ローカル暫定版・GAS取得後に上書き）
+// ============================================================
+function renderMonthlyTotal() {
+  if (currentUser && currentUser.periodLabel) {
+    renderMonthlyFromGAS();
+    return;
+  }
+  // GAS未取得の場合は「取得中」表示
+  const now = new Date();
+  const period = getCurrentPeriod(now);
+  document.getElementById("monthly-period").textContent =
+    `集計期間：${period.label}`;
+
+  // LocalStorageから期間内の全日付データを集計
+  let total = 0;
+  const breakdown = {};
+  const dates = getPeriodDates(period);
+
+  dates.forEach(dateKey => {
+    const saved = localStorage.getItem("rec_" + dateKey.replace(/\//g,"") + "_" + currentUser.name);
+    if (!saved) return;
+    const r = JSON.parse(saved);
+    Object.entries(r.allowances || {}).forEach(([id, a]) => {
+      if (a.amount > 0) {
+        total += a.amount;
+        const name = a.freeName ? "＋" + a.freeName : id;
+        breakdown[name] = (breakdown[name] || 0) + a.amount;
+      }
+    });
+  });
+
+  // 今日の分も含める
+  Object.entries(rec.allowances || {}).forEach(([id, a]) => {
+    if (a.amount > 0) {
+      total += a.amount;
+    }
+  });
+  // 重複防止のため今日の分は再計算
+  // （上のループで今日も含まれるのでここでは今日だけ別計算しない）
+
+  document.getElementById("monthly-total").textContent =
+    `¥${total.toLocaleString()}`;
+
+  // ブレークダウン（押した手当一覧）
+  const items = Object.entries(breakdown).map(([k,v]) => `¥${v.toLocaleString()}`);
+  document.getElementById("monthly-breakdown").textContent =
+    items.length > 0 ? items.join("　") : "手当なし";
+}
+
+function getCurrentPeriod(now) {
+  const y = now.getFullYear(), m = now.getMonth() + 1, d = now.getDate();
+  function closingDay(year, month) {
+    const dow = new Date(year, month - 1, 20).getDay();
+    if (dow === 6) return 19;
+    if (dow === 0) return 18;
+    return 20;
+  }
+  const thisClosing = closingDay(y, m);
+  let startY, startM, endY, endM, endD;
+  if (d <= thisClosing) {
+    startM = m - 1; startY = y;
+    if (startM === 0) { startM = 12; startY = y - 1; }
+    endY = y; endM = m; endD = thisClosing;
+  } else {
+    startY = y; startM = m;
+    endM = m + 1; endY = y;
+    if (endM === 13) { endM = 1; endY = y + 1; }
+    endD = closingDay(endY, endM);
+  }
+  return {
+    label: `${startY}/${String(startM).padStart(2,"0")}/21〜${endY}/${String(endM).padStart(2,"0")}/${String(endD).padStart(2,"0")}`,
+    startY, startM, startD: 21, endY, endM, endD
+  };
+}
+
+function getPeriodDates(period) {
+  const dates = [];
+  let cur = new Date(period.startY, period.startM - 1, period.startD);
+  const end = new Date(period.endY, period.endM - 1, period.endD);
+  while (cur <= end) {
+    const yy = cur.getFullYear();
+    const mm = String(cur.getMonth() + 1).padStart(2, "0");
+    const dd = String(cur.getDate()).padStart(2, "0");
+    dates.push(`${yy}/${mm}/${dd}`);
+    cur.setDate(cur.getDate() + 1);
+  }
+  return dates;
 }
 
 function renderKintai() {
@@ -928,9 +1055,19 @@ async function doSubmit() {
   };
   document.getElementById("sheet-result").textContent="送信中…";
   try {
-    await fetch(GAS_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify(payload)});
-    document.getElementById("sheet-result").textContent="✓ スプレッドシートへ送信完了";
-    showToast("送信しました！");
+    const res = await fetch(GAS_URL,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify(payload)});
+    const result = await res.json().catch(()=>({}));
+    if (result.managerEdited) {
+      document.getElementById("sheet-result").textContent="⚠️ 管理者が修正済みのデータに上書き送信しました";
+      document.getElementById("manager-warning").classList.add("show");
+      showToast("⚠️ 管理者が修正済みです");
+    } else {
+      document.getElementById("manager-warning").classList.remove("show");
+      document.getElementById("sheet-result").textContent="✓ スプレッドシートへ送信完了";
+      showToast("送信しました！");
+      // 送信後に累積金額を再取得
+      setTimeout(() => fetchStaffData(currentUser.name), 1500);
+    }
   } catch(e) {
     document.getElementById("sheet-result").textContent="送信エラー：ネットワークを確認してください";
   }
