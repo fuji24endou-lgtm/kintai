@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<!-- saved from url=(0081)file:///C:/Users/%E5%AF%8C%E5%A3%AB%E8%91%AC%E7%A5%AD/Downloads/kintai_app_1.html -->
+<html lang="ja"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>勤怠・手当管理</title>
+<link href="./kintai_app_files/css2" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0f0f0f; --surface:#1a1a1a; --surface2:#242424; --border:#2e2e2e;
+    --text:#f0ede8; --muted:#7a7570; --accent:#c8a96e;
+    --red:#e05a5a; --green:#5ab87a; --blue:#5a8ae0; --gold:#d4a851; --purple:#9b72cf;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:50px;}
+
+  /* ── LOGIN ── */
+  #login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;background:radial-gradient(ellipse at top,#1e1612,#0f0f0f);}
+  .login-logo{font-size:13px;letter-spacing:.25em;color:var(--accent);margin-bottom:8px;}
+  .login-title{font-size:22px;font-weight:700;margin-bottom:4px;}
+  .login-sub{font-size:12px;color:var(--muted);margin-bottom:36px;}
+  .login-box{width:100%;max-width:340px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px 24px;}
+  .lbl{font-size:11px;color:var(--muted);letter-spacing:.1em;margin-bottom:8px;display:block;}
+  .staff-select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:16px;font-family:'Noto Sans JP',sans-serif;padding:14px 16px;border-radius:10px;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237a7570' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;margin-bottom:20px;}
+  .pin-row{display:flex;gap:10px;margin-bottom:20px;}
+  .pin-digit{flex:1;height:52px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;font-size:22px;text-align:center;color:var(--text);font-family:'DM Mono',monospace;outline:none;transition:border-color .2s;}
+  .pin-digit:focus{border-color:var(--accent);}
+  .login-btn{width:100%;padding:15px;border-radius:12px;border:none;background:var(--accent);color:#1a1208;font-size:15px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;}
+  .login-btn:active{opacity:.8;}
+  .login-err{color:var(--red);font-size:12px;margin-top:10px;text-align:center;min-height:18px;}
+
+  /* ── HEADER ── */
+  #main-app{display:none;}
+  .app-header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 20px 12px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;}
+  .header-user{font-size:15px;font-weight:700;}
+  .header-date{font-size:11px;color:var(--muted);margin-top:2px;font-family:'DM Mono',monospace;}
+  .logout-btn{font-size:12px;color:var(--muted);background:none;border:1px solid var(--border);padding:6px 12px;border-radius:8px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+
+  .closing-banner{display:none;background:rgba(224,90,90,.12);border-bottom:1px solid rgba(224,90,90,.3);padding:10px 20px;font-size:12px;color:var(--red);text-align:center;}
+  .closing-banner.show{display:block;}
+
+  .section{padding:16px 20px 0;}
+  .section-label{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+
+  /* ── 打刻カード ── */
+  .kintai-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:12px;}
+  .kintai-row{display:grid;grid-template-columns:1fr 1fr;}
+  .kintai-cell{padding:14px 14px 16px;border-right:1px solid var(--border);}
+  .kintai-cell:last-child{border-right:none;}
+  .kc-label{font-size:10px;color:var(--muted);margin-bottom:6px;}
+  .kc-time{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--text);min-height:28px;margin-bottom:6px;}
+  .kc-time.punched{color:var(--accent);}
+  .kc-note{font-size:10px;color:var(--muted);}
+  .kc-note.hayatai{color:var(--red);}
+
+  .sbtn{width:100%;padding:13px;border-radius:10px;border:none;font-size:13px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:all .15s;}
+  .sbtn-in{background:var(--green);color:#061a0e;}
+  .sbtn-in.done{background:var(--surface2);color:var(--green);border:1px solid var(--green);}
+  .sbtn-out{background:var(--surface2);color:var(--muted);border:1px solid var(--border);}
+  .sbtn-out.done{background:var(--red);color:#fff;border:none;}
+  .sbtn:disabled{opacity:.35;cursor:not-allowed;}
+  .sbtn:active:not(:disabled){transform:scale(.97);}
+
+  .cancel-lnk{display:none;text-align:center;font-size:11px;color:var(--muted);margin-top:6px;cursor:pointer;text-decoration:underline;}
+
+  /* ── 公休・有給（日付選択付き）── */
+  .holiday-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:12px;}
+  .holiday-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+  .hbtn{padding:13px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;transition:all .15s;text-align:center;width:100%;}
+  .hbtn:active{transform:scale(.97);}
+  .hbtn.on-k{border-color:var(--blue);background:rgba(90,138,224,.1);}
+  .hbtn.on-y{border-color:var(--purple);background:rgba(155,114,207,.1);}
+  .hbtn-icon{font-size:18px;margin-bottom:3px;}
+  .hbtn-name{font-size:13px;font-weight:700;color:var(--text);}
+  .hbtn.on-k .hbtn-name{color:var(--blue);}
+  .hbtn.on-y .hbtn-name{color:var(--purple);}
+  .hbtn-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+
+  /* カレンダー（スマホ最適化） */
+  .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .cal-month-label{font-size:16px;font-weight:700;font-family:'DM Mono',monospace;color:var(--text);}
+  .cal-nav{background:var(--surface2);border:1px solid var(--border);color:var(--text);width:44px;height:44px;border-radius:10px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .cal-nav:active{opacity:.7;}
+  .cal-today-btn{font-size:12px;color:var(--accent);background:none;border:1px solid var(--accent);padding:8px 14px;border-radius:8px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .cal-dow{text-align:center;font-size:11px;color:var(--muted);padding:6px 0;font-weight:700;}
+  .cal-dow:first-child{color:#e07070;}
+  .cal-dow:last-child{color:#7090e0;}
+  .cal-day{min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:10px;font-size:15px;cursor:pointer;border:1px solid transparent;position:relative;transition:all .15s;font-weight:500;}
+  .cal-day:active{transform:scale(.90);}
+  .cal-day.empty{cursor:default;}
+  .cal-day.today{border-color:var(--accent);color:var(--accent);font-weight:700;}
+  .cal-day.sun{color:#e07070;}
+  .cal-day.sat{color:#7090e0;}
+  .cal-day.has-k{background:rgba(90,138,224,.3);border-color:var(--blue);}
+  .cal-day.has-y{background:rgba(155,114,207,.3);border-color:var(--purple);}
+  .cal-day.selected{outline:2px solid var(--accent);background:rgba(200,169,110,.12);}
+  .cal-legend{display:flex;gap:16px;margin-top:12px;font-size:12px;color:var(--muted);justify-content:center;}
+  .cal-legend-dot{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle;}
+
+  /* 申請済みリスト */
+  .holiday-list{margin-top:10px;}
+  .holiday-tag{display:inline-flex;align-items:center;gap:6px;background:var(--surface2);border-radius:20px;padding:5px 10px;font-size:11px;margin:3px 3px 0 0;}
+  .holiday-tag-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;line-height:1;padding:0;}
+
+  /* ── 締めボタン（管理者のみ）── */
+  .closing-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:12px;}
+  .closing-btn{width:100%;padding:15px;border-radius:12px;border:none;background:linear-gradient(135deg,#6a2a2a,#b04040);color:#fff;font-size:15px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:all .15s;}
+  .closing-btn.done{background:var(--surface2);color:var(--red);border:1px solid var(--red);}
+  .closing-btn:active{transform:scale(.98);}
+  .closing-desc{font-size:11px;color:var(--muted);text-align:center;margin-top:8px;}
+  .closing-alert{display:none;background:rgba(224,90,90,.08);border:1px solid rgba(224,90,90,.25);border-radius:8px;padding:8px 12px;margin-top:10px;font-size:11px;color:var(--red);text-align:center;}
+  .closing-alert.show{display:block;}
+
+  /* ── 手当 ── */
+  .allowance-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;}
+  .abtn{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 10px;display:flex;flex-direction:column;gap:4px;cursor:pointer;transition:all .15s;text-align:left;width:100%;}
+  .abtn:active{transform:scale(.97);}
+  .abtn.on{border-color:var(--gold);background:rgba(212,168,81,.08);}
+  .abtn-name{font-size:13px;font-weight:700;color:var(--text);}
+  .abtn-price{font-size:12px;font-family:'DM Mono',monospace;color:var(--muted);}
+  .abtn.on .abtn-price{color:var(--gold);}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--gold);display:inline-block;margin-left:4px;opacity:0;transition:opacity .2s;}
+  .abtn.on .dot{opacity:1;}
+  .nbadge{font-size:9px;background:var(--red);color:#fff;border-radius:4px;padding:1px 4px;margin-left:4px;}
+
+  /* ── ログ ── */
+  .log-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:12px;}
+  .log-item{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-bottom:1px solid var(--border);font-size:12px;}
+  .log-item:last-child{border-bottom:none;}
+  .log-lbl{color:var(--muted);flex:1;}
+  .log-next{font-size:10px;color:var(--red);margin-left:6px;}
+  .log-time{font-family:'DM Mono',monospace;color:var(--accent);}
+  .log-empty{padding:20px 16px;color:var(--muted);font-size:12px;text-align:center;}
+
+  /* ── 送信 ── */
+  .submit-section{padding:14px 20px 20px;}
+  .submit-btn{width:100%;padding:17px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--accent),#a8864a);color:#1a1208;font-size:15px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;}
+  .submit-btn:active{opacity:.85;}
+  .sheet-result{font-size:11px;text-align:center;margin-top:8px;color:var(--muted);min-height:16px;}
+  .submit-info{font-size:11px;color:var(--muted);text-align:center;margin-top:4px;}
+
+  /* ── モーダル ── */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:flex-end;}
+  .modal-overlay.open{display:flex;}
+  .modal-sheet{width:100%;background:var(--surface);border-radius:20px 20px 0 0;padding:24px 24px 44px;border-top:1px solid var(--border);animation:slideUp .25s ease;}
+  @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px;}
+  .modal-title{font-size:16px;font-weight:700;margin-bottom:6px;}
+  .modal-sub{font-size:12px;color:var(--muted);margin-bottom:20px;white-space:pre-line;line-height:1.9;}
+  .mbtn{width:100%;padding:15px;border-radius:12px;border:none;font-size:15px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;margin-bottom:10px;}
+  .mbtn-ok{background:var(--accent);color:#1a1208;}
+  .mbtn-red{background:var(--red);color:#fff;}
+  .mbtn-cancel{background:var(--surface2);color:var(--muted);border:1px solid var(--border);}
+
+  /* ── トースト ── */
+  .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--surface2);border:1px solid var(--border);border-radius:30px;padding:10px 20px;font-size:13px;color:var(--text);opacity:0;transition:all .3s;z-index:300;white-space:nowrap;pointer-events:none;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<!-- ========== ログイン ========== -->
+<div id="login-screen">
+  <div class="login-logo">葬祭スタッフ管理</div>
+  <div class="login-title">勤怠・手当入力</div>
+  <div class="login-sub">スタッフ名を選んでPINを入力してください</div>
+  <div class="login-box">
+    <label class="lbl">スタッフ名</label>
+    <select class="staff-select" id="staff-select">
+      <option value="">-- 選択してください --</option>
+    <option value="中島 靖裕">中島 靖裕</option><option value="横山 浩士">横山 浩士</option><option value="永田 晃久">永田 晃久</option><option value="江村 雄一">江村 雄一</option><option value="窪田 知穂">窪田 知穂</option><option value="広瀬 祐樹">広瀬 祐樹</option><option value="遠藤 美樹">遠藤 美樹</option><option value="深尾 翔馬">深尾 翔馬</option><option value="國枝 記代">國枝 記代</option><option value="乾　妙子">乾　妙子</option></select>
+    <label class="lbl" style="display:none;">PIN（4桁）</label>
+    <div class="pin-row" style="display:none;">
+      <input type="number" class="pin-digit" id="p0" inputmode="numeric" min="0" max="9">
+      <input type="number" class="pin-digit" id="p1" inputmode="numeric" min="0" max="9">
+      <input type="number" class="pin-digit" id="p2" inputmode="numeric" min="0" max="9">
+      <input type="number" class="pin-digit" id="p3" inputmode="numeric" min="0" max="9">
+    </div>
+    <button class="login-btn" onclick="doLogin()">ログイン（動作確認モード）</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- ========== メインアプリ ========== -->
+<div id="main-app">
+  <div class="app-header">
+    <div>
+      <div class="header-user" id="header-user"></div>
+      <div class="header-date" id="header-date">2026年3月22日（日）</div>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">ログアウト</button>
+  </div>
+  <div style="background:rgba(212,168,81,.15);border-bottom:1px solid rgba(212,168,81,.3);padding:8px 20px;font-size:11px;color:var(--accent);text-align:center;">⚙️ 動作確認モード（PIN不要）</div>
+  <div class="closing-banner" id="closing-banner"></div>
+
+  <!-- 出退勤 -->
+  <div class="section">
+    <div class="section-label">出退勤打刻</div>
+    <div class="kintai-card">
+      <div class="kintai-row">
+        <div class="kintai-cell">
+          <div class="kc-label">出勤</div>
+          <div class="kc-time" id="time-in">--:--</div>
+          <button class="sbtn sbtn-in" id="btn-in" onclick="stampIn()">出勤打刻</button>
+          <div class="cancel-lnk" id="cancel-in" onclick="cancelIn()">取り消す</div>
+        </div>
+        <div class="kintai-cell">
+          <div class="kc-label">退勤</div>
+          <div class="kc-time" id="time-out">17:00</div>
+          <div class="kc-note" id="out-note">未打刻=17:00自動</div>
+          <button class="sbtn sbtn-out" id="btn-out" onclick="stampOut()" style="margin-top:8px;" disabled="">退勤打刻</button>
+          <div class="cancel-lnk" id="cancel-out" onclick="cancelOut()">取り消す</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 公休・有給（カレンダー） -->
+  <div class="section">
+    <div class="section-label">休日申請（日付をタップ → 公休・有給を選択）</div>
+    <div class="holiday-card">
+      <div class="cal-header">
+        <button class="cal-nav" onclick="calMove(-1)">‹</button>
+        <div class="cal-month-label" id="cal-month-label">2026年 3月</div>
+        <button class="cal-nav" onclick="calMove(1)">›</button>
+        <button class="cal-today-btn" onclick="calToday()">今月</button>
+      </div>
+      <div class="cal-grid" id="cal-grid"><div class="cal-dow">日</div><div class="cal-dow">月</div><div class="cal-dow">火</div><div class="cal-dow">水</div><div class="cal-dow">木</div><div class="cal-dow">金</div><div class="cal-dow">土</div><div class="cal-day sun" onclick="calSelectDay(&#39;2026/03/01&#39;)">1</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/02&#39;)">2</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/03&#39;)">3</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/04&#39;)">4</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/05&#39;)">5</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/06&#39;)">6</div><div class="cal-day sat" onclick="calSelectDay(&#39;2026/03/07&#39;)">7</div><div class="cal-day sun" onclick="calSelectDay(&#39;2026/03/08&#39;)">8</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/09&#39;)">9</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/10&#39;)">10</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/11&#39;)">11</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/12&#39;)">12</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/13&#39;)">13</div><div class="cal-day sat" onclick="calSelectDay(&#39;2026/03/14&#39;)">14</div><div class="cal-day sun" onclick="calSelectDay(&#39;2026/03/15&#39;)">15</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/16&#39;)">16</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/17&#39;)">17</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/18&#39;)">18</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/19&#39;)">19</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/20&#39;)">20</div><div class="cal-day sat" onclick="calSelectDay(&#39;2026/03/21&#39;)">21</div><div class="cal-day sun today" onclick="calSelectDay(&#39;2026/03/22&#39;)">22</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/23&#39;)">23</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/24&#39;)">24</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/25&#39;)">25</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/26&#39;)">26</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/27&#39;)">27</div><div class="cal-day sat" onclick="calSelectDay(&#39;2026/03/28&#39;)">28</div><div class="cal-day sun" onclick="calSelectDay(&#39;2026/03/29&#39;)">29</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/30&#39;)">30</div><div class="cal-day" onclick="calSelectDay(&#39;2026/03/31&#39;)">31</div></div>
+      <div class="cal-legend">
+        <span><span class="cal-legend-dot" style="background:rgba(90,138,224,.5);"></span>公休</span>
+        <span><span class="cal-legend-dot" style="background:rgba(155,114,207,.5);"></span>有給</span>
+      </div>
+      <div id="cal-action" style="margin-top:12px;display:none;">
+        <div style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:8px;" id="cal-selected-label"></div>
+        <div class="holiday-row" style="margin-bottom:0;">
+          <button class="hbtn" id="btn-koukyuu" onclick="addHoliday(&#39;koukyuu&#39;)">
+            <div class="hbtn-icon">📅</div>
+            <div class="hbtn-name">公　休</div>
+          </button>
+          <button class="hbtn" id="btn-yukyuu" onclick="addHoliday(&#39;yukyuu&#39;)">
+            <div class="hbtn-icon">🌿</div>
+            <div class="hbtn-name">有　給</div>
+          </button>
+        </div>
+      </div>
+      <div class="holiday-list" id="holiday-list"></div>
+    </div>
+  </div>
+
+  <!-- 締めボタン（管理者のみ） -->
+  <div class="section" id="closing-section" style="display:none;">
+    <div class="section-label">月次締め（管理者専用）</div>
+    <div class="closing-card">
+      <button class="closing-btn" id="btn-closing" onclick="openClosingModal()">
+        🔒　締めボタンを押す
+      </button>
+      <div class="closing-desc" id="closing-desc">締めボタンを押した後の手当は<strong>翌月扱い</strong>になります</div>
+      <div class="closing-alert" id="closing-alert">⚠️ 締め済み：以降の手当は翌月扱いです</div>
+    </div>
+  </div>
+
+  <!-- 手当 -->
+  <div class="section">
+    <div class="section-label">手当申請（押すとON / もう一度でOFF）</div>
+    <div class="allowance-grid" id="allowance-grid"></div>
+  </div>
+
+  <!-- 本日の記録 -->
+  <div class="section">
+    <div class="section-label">本日の記録</div>
+    <div class="log-card" id="log-card">
+      <div class="log-empty">まだ記録がありません</div>
+    </div>
+  </div>
+
+  <!-- 送信 -->
+  <div class="submit-section">
+    <button class="submit-btn" onclick="openSubmitModal()">📤　スプレッドシートへ送信</button>
+    <div class="sheet-result" id="sheet-result"></div>
+    <div class="submit-info">送信後の修正は事務担当者が対応します</div>
+  </div>
+</div>
+
+<!-- 送信確認モーダル -->
+<div class="modal-overlay" id="submit-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">送信確認</div>
+    <div class="modal-sub" id="modal-sub"></div>
+    <button class="mbtn mbtn-ok" onclick="doSubmit()">送信する</button>
+    <button class="mbtn mbtn-cancel" onclick="closeModal(&#39;submit-modal&#39;)">キャンセル</button>
+  </div>
+</div>
+
+<!-- 締め確認モーダル -->
+<div class="modal-overlay" id="closing-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="cm-title">🔒 締めを実行しますか？</div>
+    <div class="modal-sub" id="cm-sub"></div>
+    <button class="mbtn mbtn-red" id="cm-btn" onclick="doClosing()">締める</button>
+    <button class="mbtn mbtn-cancel" onclick="closeModal(&#39;closing-modal&#39;)">キャンセル</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+//  GAS URL
+// ============================================================
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxP3mFiJ_tZGz_MimVtxvPRN2RfpGDBHssmxpslaMEOTvu6TM6NvAVrHNHqz2DV_-op/exec";
+
+// ============================================================
+//  スタッフ一覧
+//  isManager: true → 締めボタンが表示される
+//  ※ PIN は後で各自に変更
+// ============================================================
+const STAFF_LIST = [
+  { name:"中島 靖裕", pin:"1111", isManager:false,  carryoverDays:0 },
+  { name:"横山 浩士", pin:"2222", isManager:false,  carryoverDays:0 },
+  { name:"永田 晃久", pin:"3333", isManager:false,  carryoverDays:0 },
+  { name:"江村 雄一", pin:"4444", isManager:false,  carryoverDays:0 },
+  { name:"窪田 知穂", pin:"5555", isManager:false, carryoverDays:0 },
+  { name:"広瀬 祐樹", pin:"6666", isManager:false, carryoverDays:0 },
+  { name:"遠藤 美樹", pin:"1005", isManager:true,  carryoverDays:0 },
+  { name:"深尾 翔馬", pin:"8888", isManager:false, carryoverDays:0 },
+  { name:"國枝 記代", pin:"9999", isManager:true, carryoverDays:0 },
+  { name:"乾　妙子",  pin:"0000", isManager:true, carryoverDays:0 },
+];
+
+// ============================================================
+//  手当（金額は後で変更可）
+// ============================================================
+const ALLOWANCES = [
+  { id:"tuya",     name:"お通夜",     amount:1000 },
+  { id:"sogi",     name:"葬　儀",     amount:1000 },
+  { id:"hansou",   name:"時間外搬送", amount:1000 },
+  { id:"juchu",    name:"時間外受注", amount:1000 },
+  { id:"keisatsu", name:"警察案件",   amount:1000 },
+  { id:"other",    name:"その他手当", amount:1000 },
+];
+
+// ============================================================
+//  状態
+// ============================================================
+let currentUser = null;
+
+// 日次データ（当日の打刻・手当）
+let rec = {
+  inTime:      null,   // "HH:MM" | null
+  outTime:     null,   // "HH:MM" | null（未打刻→17:00自動）
+  isHayatai:   false,
+  closingTime: null,
+  allowances:  {},     // { id: {amount, time, isNextMonth} }
+};
+
+// 休日データ（複数日・キー = "YYYY/MM/DD"）
+// { "2025/03/20": "koukyuu", "2025/03/21": "yukyuu" }
+let holidays = {};
+
+// 日付ピッカー用
+// ============================================================
+//  初期化
+// ============================================================
+window.onload = () => {
+  const sel = document.getElementById("staff-select");
+  STAFF_LIST.forEach(s => {
+    const o = document.createElement("option");
+    o.value = s.name; o.textContent = s.name;
+    sel.appendChild(o);
+  });
+  [0,1,2,3].forEach(i => {
+    const el = document.getElementById("p"+i);
+    el.addEventListener("input", () => {
+      const v = el.value.replace(/\D/g,"").slice(-1);
+      el.value = v;
+      if (v && i<3) document.getElementById("p"+(i+1)).focus();
+    });
+    el.addEventListener("keydown", e => {
+      if (e.key==="Backspace" && !el.value && i>0) document.getElementById("p"+(i-1)).focus();
+    });
+  });
+  calToday();
+  updateHeader();
+  setInterval(updateHeader, 60000);
+};
+
+function updateHeader() {
+  const now = new Date();
+  const days = ["日","月","火","水","木","金","土"];
+  document.getElementById("header-date").textContent =
+    `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日（${days[now.getDay()]}）`;
+  updateBanner(now);
+}
+
+function updateBanner(now) {
+  const closing = getClosingDay(now.getFullYear(), now.getMonth());
+  const d = now.getDate();
+  const banner = document.getElementById("closing-banner");
+  if (d === closing) {
+    if (rec && rec.closingTime) {
+      banner.textContent = `✅ 締め作業完了（${now.getMonth()+1}月${closing}日）　手当は翌月扱いです`;
+      banner.style.background = "rgba(90,184,122,.12)";
+      banner.style.borderBottomColor = "rgba(90,184,122,.3)";
+      banner.style.color = "var(--green)";
+    } else {
+      banner.textContent = `🔔 本日は締め日（${now.getMonth()+1}月${closing}日）です　締め作業をお忘れなく`;
+      banner.style.background = "";
+      banner.style.borderBottomColor = "";
+      banner.style.color = "";
+    }
+    banner.classList.add("show");
+  } else if (d === closing-1) {
+    banner.textContent = `📌 明日（${now.getMonth()+1}月${closing}日）は締め日です`;
+    banner.style.background = "";
+    banner.style.borderBottomColor = "";
+    banner.style.color = "";
+    banner.classList.add("show");
+  } else {
+    banner.classList.remove("show");
+  }
+}
+
+// ============================================================
+//  ログイン / ログアウト
+// ============================================================
+function doLogin() {
+  const name = document.getElementById("staff-select").value;
+  const pin  = [0,1,2,3].map(i=>document.getElementById("p"+i).value).join("");
+  const err  = document.getElementById("login-err");
+  if (!name)       { err.textContent="スタッフ名を選択してください"; return; }
+  // ※動作確認モード：PIN不要
+  const staff = STAFF_LIST.find(s=>s.name===name);
+  if (!staff)      { err.textContent="スタッフが見つかりません"; return; }
+
+  currentUser = staff;
+  err.textContent = "";
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("main-app").style.display = "block";
+  document.getElementById("header-user").textContent = staff.name + "　さん";
+
+  // 管理者のみ締めセクション表示
+  document.getElementById("closing-section").style.display = staff.isManager ? "block" : "none";
+
+  // データ読み込み
+  const savedRec = localStorage.getItem("rec_"+todayKey()+"_"+staff.name);
+  rec = savedRec ? JSON.parse(savedRec)
+    : { inTime:null, outTime:null, isHayatai:false, closingTime:null, allowances:{} };
+
+  const savedHol = localStorage.getItem("hol_"+staff.name);
+  holidays = savedHol ? JSON.parse(savedHol) : {};
+
+  calToday();
+  renderAll();
+  updateHeader();
+}
+
+function doLogout() {
+  currentUser = null;
+  document.getElementById("login-screen").style.display = "flex";
+  document.getElementById("main-app").style.display = "none";
+  [0,1,2,3].forEach(i=>{ document.getElementById("p"+i).value=""; });
+  document.getElementById("staff-select").value="";
+}
+
+// ============================================================
+//  出勤打刻
+// ============================================================
+function stampIn() {
+  rec.inTime = nowHHMM();
+  saveRec(); renderAll();
+  showToast(`出勤打刻：${rec.inTime}`);
+}
+function cancelIn() {
+  if (!confirm("出勤打刻を取り消しますか？")) return;
+  rec.inTime = null;
+  saveRec(); renderAll();
+  showToast("出勤打刻を取り消しました");
+}
+
+// ============================================================
+//  退勤打刻（16:30前 → 早退自動判定）
+// ============================================================
+function stampOut() {
+  const t = nowHHMM();
+  rec.outTime   = t;
+  rec.isHayatai = timeToMin(t) < timeToMin("16:30");
+  saveRec(); renderAll();
+  showToast(rec.isHayatai ? `早退打刻：${t}` : `退勤打刻：${t}`);
+}
+function cancelOut() {
+  rec.outTime   = null;
+  rec.isHayatai = false;
+  saveRec(); renderAll();
+  showToast("退勤打刻を取り消しました");
+}
+
+// ============================================================
+//  公休・有給（カレンダー）
+// ============================================================
+let calYear  = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+let selectedDateKey = null; // "YYYY/MM/DD"
+
+function calToday() {
+  const now = new Date();
+  calYear = now.getFullYear(); calMonth = now.getMonth();
+  selectedDateKey = null;
+  renderCalendar();
+}
+function calMove(delta) {
+  calMonth += delta;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  selectedDateKey = null;
+  renderCalendar();
+}
+function calSelectDay(key) {
+  selectedDateKey = key;
+  renderCalendar();
+  renderCalAction();
+}
+
+function renderCalendar() {
+  const label = document.getElementById("cal-month-label");
+  label.textContent = `${calYear}年 ${calMonth+1}月`;
+
+  const grid = document.getElementById("cal-grid");
+  const dows = ["日","月","火","水","木","金","土"];
+  const today = fmtDate(new Date());
+
+  // ヘッダー
+  let html = dows.map(d=>`<div class="cal-dow">${d}</div>`).join("");
+
+  // 月の最初の曜日
+  const firstDow = new Date(calYear, calMonth, 1).getDay();
+  for (let i=0; i<firstDow; i++) html += `<div class="cal-day empty"></div>`;
+
+  // 日数
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  for (let d=1; d<=daysInMonth; d++) {
+    const key = `${calYear}/${String(calMonth+1).padStart(2,"0")}/${String(d).padStart(2,"0")}`;
+    const dow = new Date(calYear, calMonth, d).getDay();
+    const type = holidays[key];
+    let cls = "cal-day";
+    if (dow===0) cls += " sun";
+    if (dow===6) cls += " sat";
+    if (key===today) cls += " today";
+    if (type==="koukyuu") cls += " has-k";
+    if (type==="yukyuu")  cls += " has-y";
+    if (key===selectedDateKey) cls += " selected";
+    html += `<div class="${cls}" onclick="calSelectDay('${key}')">${d}</div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function renderCalAction() {
+  const action = document.getElementById("cal-action");
+  const lbl    = document.getElementById("cal-selected-label");
+  if (!selectedDateKey) { action.style.display="none"; return; }
+  action.style.display = "block";
+  const days = ["日","月","火","水","木","金","土"];
+  const d = new Date(selectedDateKey.replace(/\//g,"-"));
+  const type = holidays[selectedDateKey];
+  lbl.textContent = `${selectedDateKey}（${days[d.getDay()]}）${type ? (type==="koukyuu"?"　📅公休申請済":"　🌿有給申請済") : "　→ 種別を選択"}`;
+  document.getElementById("btn-koukyuu").className = "hbtn" + (type==="koukyuu"?" on-k":"");
+  document.getElementById("btn-yukyuu").className  = "hbtn" + (type==="yukyuu" ?" on-y":"");
+}
+
+function addHoliday(type) {
+  if (!selectedDateKey) { showToast("日付をタップして選択してください"); return; }
+  const key = selectedDateKey;
+  if (holidays[key] === type) {
+    delete holidays[key];
+    showToast("休日申請を取り消しました");
+  } else {
+    holidays[key] = type;
+    showToast(type==="koukyuu" ? `公休を申請：${key}` : `有給を申請：${key}`);
+  }
+  saveHol(); renderAll(); renderCalAction();
+}
+
+function removeHoliday(key) {
+  delete holidays[key];
+  saveHol(); renderAll();
+  showToast("休日申請を取り消しました");
+}
+
+// ============================================================
+//  締め
+// ============================================================
+function openClosingModal() {
+  const now = new Date();
+  if (rec.closingTime) {
+    document.getElementById("cm-title").textContent = "締めを取り消しますか？";
+    document.getElementById("cm-sub").textContent   = `${rec.closingTime} に締めた記録を取り消します。\n手当の翌月フラグもリセットされます。`;
+    document.getElementById("cm-btn").textContent   = "取り消す";
+    document.getElementById("cm-btn").onclick       = cancelClosing;
+  } else {
+    document.getElementById("cm-title").textContent = "🔒 締めを実行しますか？";
+    document.getElementById("cm-sub").textContent   =
+      `${nowHHMM()} に締めを記録します。\nこれ以降に押した手当は翌月扱いになります。`;
+    document.getElementById("cm-btn").textContent   = "締める";
+    document.getElementById("cm-btn").onclick       = doClosing;
+  }
+  document.getElementById("closing-modal").classList.add("open");
+}
+function doClosing() {
+  rec.closingTime = nowHHMM();
+  closeModal("closing-modal");
+  saveRec(); renderAll();
+  showToast(`締め完了：${rec.closingTime}`);
+}
+function cancelClosing() {
+  rec.closingTime = null;
+  Object.keys(rec.allowances).forEach(id=>{ rec.allowances[id].isNextMonth=false; });
+  closeModal("closing-modal");
+  saveRec(); renderAll();
+  showToast("締めを取り消しました");
+}
+
+// ============================================================
+//  手当
+// ============================================================
+function toggleAllowance(id, amount) {
+  if (rec.allowances[id]) {
+    delete rec.allowances[id];
+    showToast("手当を取り消しました");
+  } else {
+    const isNext = isAfterClosing();
+    rec.allowances[id] = { amount, time:nowHHMM(), isNextMonth:isNext };
+    showToast(isNext ? "手当を追加（翌月扱い）" : "手当を追加しました");
+  }
+  saveRec(); renderAll();
+}
+
+function isAfterClosing() {
+  if (rec.closingTime) return true;
+  return false;
+}
+
+// ============================================================
+//  レンダリング
+// ============================================================
+function renderAll() {
+  renderKintai();
+  renderCalendar();
+  renderHolidayList();
+  renderClosing();
+  renderAllowances();
+  renderLog();
+}
+
+function renderKintai() {
+  // 出勤
+  const ti=document.getElementById("time-in"),bi=document.getElementById("btn-in"),ci=document.getElementById("cancel-in");
+  if (rec.inTime) {
+    ti.textContent=rec.inTime; ti.classList.add("punched");
+    bi.textContent="出勤済み ✓"; bi.classList.add("done"); bi.disabled=true;
+    ci.style.display="block";
+    document.getElementById("btn-out").disabled=false;
+  } else {
+    ti.textContent="--:--"; ti.classList.remove("punched");
+    bi.textContent="出勤打刻"; bi.classList.remove("done"); bi.disabled=false;
+    ci.style.display="none";
+    document.getElementById("btn-out").disabled=true;
+  }
+  // 退勤
+  const to=document.getElementById("time-out"),note=document.getElementById("out-note");
+  const bo=document.getElementById("btn-out"),co=document.getElementById("cancel-out");
+  if (rec.outTime) {
+    to.textContent=rec.outTime; to.classList.add("punched");
+    note.textContent=rec.isHayatai?"早退":"退勤済み";
+    note.className="kc-note"+(rec.isHayatai?" hayatai":"");
+    bo.textContent="退勤済み ✓"; bo.classList.add("done"); bo.disabled=true;
+    co.style.display="block";
+  } else {
+    to.textContent="17:00"; to.classList.remove("punched");
+    note.textContent="未打刻=17:00自動"; note.className="kc-note";
+    bo.textContent="退勤打刻"; bo.classList.remove("done");
+    if (rec.inTime) bo.disabled=false;
+    co.style.display="none";
+  }
+}
+
+function renderHolidayList() {
+  const list = document.getElementById("holiday-list");
+  const sorted = Object.keys(holidays).sort();
+  if (!sorted.length) { list.innerHTML=""; return; }
+  list.innerHTML = sorted.map(key => {
+    const type = holidays[key];
+    const label = type==="koukyuu" ? "📅 公休" : "🌿 有給";
+    const color = type==="koukyuu" ? "var(--blue)" : "var(--purple)";
+    return `<span class="holiday-tag" style="color:${color};border:1px solid ${color};">
+      ${label} ${key}
+      <button class="holiday-tag-del" onclick="removeHoliday('${key}')">×</button>
+    </span>`;
+  }).join("");
+}
+
+function renderClosing() {
+  if (!currentUser?.isManager) return;
+  const btn=document.getElementById("btn-closing"),desc=document.getElementById("closing-desc"),alrt=document.getElementById("closing-alert");
+  if (rec.closingTime) {
+    btn.className="closing-btn done";
+    btn.textContent=`🔒 締め済み ${rec.closingTime}　（取り消す）`;
+    desc.innerHTML=`<span style="color:var(--red);font-family:'DM Mono',monospace;">${rec.closingTime}</span> に締めました`;
+    alrt.classList.add("show");
+  } else {
+    btn.className="closing-btn";
+    btn.textContent="🔒　締めボタンを押す";
+    desc.innerHTML="締めボタンを押した後の手当は<strong>翌月扱い</strong>になります";
+    alrt.classList.remove("show");
+  }
+}
+
+function renderAllowances() {
+  const grid=document.getElementById("allowance-grid");
+  const afterClose=isAfterClosing();
+  grid.innerHTML="";
+  ALLOWANCES.forEach(a=>{
+    const isOn=!!rec.allowances[a.id];
+    const isNext=isOn?rec.allowances[a.id].isNextMonth:afterClose;
+    const btn=document.createElement("button");
+    btn.className="abtn"+(isOn?" on":"");
+    btn.innerHTML=`
+      <div class="abtn-name">${a.name}<span class="dot">●</span>${isNext?'<span class="nbadge">翌月</span>':''}</div>
+      <div class="abtn-price">¥${a.amount.toLocaleString()}</div>`;
+    btn.onclick=()=>toggleAllowance(a.id,a.amount);
+    grid.appendChild(btn);
+  });
+}
+
+function renderLog() {
+  const card=document.getElementById("log-card");
+  const items=[];
+
+  // 休日（当日分のみ）
+  const todayKey_ = fmtDate(new Date());
+  if (holidays[todayKey_]) {
+    items.push({ label:holidays[todayKey_]==="koukyuu"?"📅 公休":"🌿 有給", time:"申請済", next:false });
+  }
+  if (rec.inTime)   items.push({ label:"出勤打刻", time:rec.inTime, next:false });
+  if (rec.outTime)  items.push({ label:rec.isHayatai?"早退打刻":"退勤打刻", time:rec.outTime, next:false });
+  if (rec.closingTime) items.push({ label:"🔒 締め", time:rec.closingTime, next:false });
+  ALLOWANCES.forEach(a=>{
+    if (rec.allowances[a.id]) {
+      const r=rec.allowances[a.id];
+      items.push({ label:`${a.name}　¥${a.amount.toLocaleString()}`, time:r.time, next:r.isNextMonth });
+    }
+  });
+
+  if (!items.length) { card.innerHTML='<div class="log-empty">まだ記録がありません</div>'; return; }
+  card.innerHTML=items.map(it=>`
+    <div class="log-item">
+      <span class="log-lbl">${it.label}${it.next?'<span class="log-next">翌月</span>':''}</span>
+      <span class="log-time">${it.time}</span>
+    </div>`).join("");
+}
+
+// ============================================================
+//  送信
+// ============================================================
+function openSubmitModal() {
+  const lines=[];
+  const todayKey_=fmtDate(new Date());
+  if (holidays[todayKey_]) lines.push(holidays[todayKey_]==="koukyuu"?"📅 公休":"🌿 有給");
+  if (rec.inTime) lines.push(`出勤: ${rec.inTime}`);
+  lines.push(`退勤: ${rec.outTime?rec.outTime+"（"+(rec.isHayatai?"早退":"通常")+"）":"17:00（自動）"}`);
+  if (rec.closingTime) lines.push(`🔒 締め: ${rec.closingTime}`);
+  ALLOWANCES.forEach(a=>{
+    if (rec.allowances[a.id]) {
+      const r=rec.allowances[a.id];
+      lines.push(`${a.name}: ¥${a.amount.toLocaleString()}${r.isNextMonth?" [翌月]":""}`);
+    }
+  });
+  if (!rec.inTime && !holidays[todayKey_] && !Object.keys(rec.allowances).length) {
+    showToast("送信する内容がありません"); return;
+  }
+  document.getElementById("modal-sub").textContent=lines.join("\n");
+  document.getElementById("submit-modal").classList.add("open");
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+
+async function doSubmit() {
+  closeModal("submit-modal");
+  const now=new Date();
+  const todayKey_=fmtDate(now);
+  const payload={
+    staff:         currentUser.name,
+    date:          todayKey_,
+    dayOfWeek:     ["日","月","火","水","木","金","土"][now.getDay()],
+    inTime:        rec.inTime||"",
+    outTime:       rec.outTime||"17:00",
+    outAuto:       !rec.outTime,
+    isHayatai:     rec.isHayatai,
+    holidayToday:  holidays[todayKey_]||"",
+    holidays:      Object.entries(holidays).map(([d,t])=>({date:d,type:t})),
+    closingTime:   rec.closingTime||"",
+    allowances:    ALLOWANCES.map(a=>({
+      name:        a.name,
+      amount:      rec.allowances[a.id]?a.amount:0,
+      time:        rec.allowances[a.id]?rec.allowances[a.id].time:"",
+      isNextMonth: rec.allowances[a.id]?rec.allowances[a.id].isNextMonth:false,
+    })),
+    submittedAt:   nowHHMM(),
+    carryoverDays: currentUser.carryoverDays,
+  };
+  document.getElementById("sheet-result").textContent="送信中…";
+  try {
+    await fetch(GAS_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+    document.getElementById("sheet-result").textContent="✓ スプレッドシートへ送信完了";
+    showToast("送信しました！");
+  } catch(e) {
+    document.getElementById("sheet-result").textContent="送信エラー：ネットワークを確認してください";
+  }
+}
+
+// ============================================================
+//  締め日計算
+// ============================================================
+function getClosingDay(year, month) {
+  const dow=new Date(year,month,20).getDay();
+  if (dow===6) return 19;
+  if (dow===0) return 18;
+  return 20;
+}
+
+// ============================================================
+//  ユーティリティ
+// ============================================================
+function nowHHMM() {
+  const n=new Date();
+  return `${String(n.getHours()).padStart(2,"0")}:${String(n.getMinutes()).padStart(2,"0")}`;
+}
+function fmtDate(d) {
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getDate()).padStart(2,"0")}`;
+}
+function todayKey() {
+  const d=new Date();
+  return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
+}
+function timeToMin(hhmm) {
+  const [h,m]=hhmm.split(":").map(Number); return h*60+m;
+}
+function saveRec() {
+  if (!currentUser) return;
+  localStorage.setItem("rec_"+todayKey()+"_"+currentUser.name, JSON.stringify(rec));
+}
+function saveHol() {
+  if (!currentUser) return;
+  localStorage.setItem("hol_"+currentUser.name, JSON.stringify(holidays));
+}
+function showToast(msg) {
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),2500);
+}
+</script>
+
+
+</body></html>
